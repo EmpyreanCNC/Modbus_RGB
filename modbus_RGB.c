@@ -16,9 +16,7 @@
 //this plugin was written with the intent of being used with the R4DVI04 eletechsup modbus IO board which carries 4 relays which can be used to drive a simple RGB LED Strip.
 
 #if MBRGB_ENABLE
-//#include <string.h>
 #include <math.h>
-//#include "grbl/protocol.h" Dont know why this was causing an error, but when uncommented causes the bool datatype to shit the bed and fail the compile
 #include "grbl/hal.h"
 #include "grbl/state_machine.h"
 #include "grbl/system.h"
@@ -36,25 +34,6 @@ static on_program_completed_ptr on_program_completed;
 static on_spindle_selected_ptr on_spindle_selected;
 
 static nvs_address_t nvs_address;
-//typedef struct {
-//    uint8_t  Modbus_RGB_Device_Address;
-//    uint8_t  Modbus_RGB_Device_Coil;
-//} MBRGB_settings_t;
-
-//static MBRGB_settings_t MBRGB;
-
-
-
-//static void mbrgb_settings_save (void)
-//{
-//    hal.nvs.memcpy_to_nvs(nvs_address, (uint8_t *)&MBRGB, sizeof(MBRGB_settings_t), true);
-//}
-
-//static void mbrgb_settings_load (void)
-//{
-//    if(hal.nvs.memcpy_from_nvs((uint8_t *)&MBRGB, nvs_address, sizeof(MBRGB_settings_t), true) != NVS_TransferResult_OK)
-//       mbrgb_settings_restore();
-//}
 
 mbrgb_settings_t mbrgb_config;
 
@@ -75,7 +54,6 @@ static void mbrgb_settings_save (void)
 
 static void mbrgb_settings_restore (void)
 {
-    //memset(&mbrgb_config, 0, sizeof(mbrgb_settings_t));
     mbrgb_config.RGB_modbus_address = 1;
     mbrgb_config.RGB_modbus_Coil = 0;
     hal.nvs.memcpy_to_nvs(nvs_address, (uint8_t *)&mbrgb_config, sizeof(mbrgb_settings_t), true);
@@ -91,9 +69,7 @@ static const modbus_callbacks_t callbacks = {
     .retries = MBRGB_RETRIES,
 };
 
-#define register_address 0  //this value is set by a setting box in the Modbus Device Setting section in IOSender
 #define value 3             //this value defines how many coils to set the state for, IE if we start at address 0 we will write 0,1 & 2             
-//int8_t device_address = 1; //insert new setting here
 
 int RGB_OFF     =0; //turns all (the 3 we are writing to) channels off       
 int RGB_WHITE   =7; //turns all 3 on. 7
@@ -108,16 +84,16 @@ int pack;           //this variable is what is packed into the modbus message to
 void mbrgb_ModBus_WriteCoils(int pack) {modbus_message_t _cmd = {
         //.context = (void *)MBIO_Command,
         .crc_check = true,
-        .adu[0] = mbrgb_config.RGB_modbus_address,              // slave device address MBRGB.Modbus_RGB_Device_Address
-        .adu[1] = 15,   // function code this is the multiple coil write modbus command code
-        .adu[2] = MODBUS_SET_MSB16(mbrgb_config.RGB_modbus_Coil), // start address MSB MBRGB.Modbus_RGB_Device_Coil
-        .adu[3] = MODBUS_SET_LSB16(mbrgb_config.RGB_modbus_Coil), // start address LSB
-        .adu[4] = MODBUS_SET_MSB16(value),  // quantity MSB
-        .adu[5] = MODBUS_SET_LSB16(value),  // quantity LSB
-        .adu[6] = (3 + 7) / 8,          // byte count (ceil of bits/8)
+        .adu[0] = mbrgb_config.RGB_modbus_address,                        // slave device address 
+        .adu[1] = 15,                                                     // function code this is the multiple coil write modbus command code
+        .adu[2] = MODBUS_SET_MSB16(mbrgb_config.RGB_modbus_Coil),         // start address MSB 
+        .adu[3] = MODBUS_SET_LSB16(mbrgb_config.RGB_modbus_Coil),         // start address LSB
+        .adu[4] = MODBUS_SET_MSB16(value),                                // quantity MSB
+        .adu[5] = MODBUS_SET_LSB16(value),                                // quantity LSB
+        .adu[6] = (3 + 7) / 8,                                            // byte count (ceil of bits/8)
         // coil values packed into bytes follow here
-        .tx_length = 7 + ((3 + 7) / 8) + 2, // header + data + CRC
-        .rx_length = 8                           // response length (echo start + quantity)
+        .tx_length = 7 + ((3 + 7) / 8) + 2,                               // header + data + CRC
+        .rx_length = 8                                                    // response length (echo start + quantity)
     };
 
     // Copy coil values into ADU after byte count
@@ -174,7 +150,7 @@ static void mbrgb_report_options(bool newopt) {
         hal.stream.write("RGB Modbus");
     }
     else {
-        hal.stream.write("[PLUGIN:RGB Modbus v0.01]" ASCII_EOL);
+        hal.stream.write("[PLUGIN:RGB Modbus v1.00]" ASCII_EOL);
     }
 }
 
@@ -206,4 +182,5 @@ void mbrgb_init(void) {
     };
 
 #endif
+
 
